@@ -24,7 +24,6 @@ integrated_resnet:
       gamma_down_dtod: 0.0  # Device-to-device variation for gamma_down disabled
       mult_noise: False  # Multiplier noise remains disabled
       write_noise_std: 0.0  # Standard deviation for write noise disabled
-      mean_bound_reference: True  # Slope does not depend on bound
       lifetime: 0.0  # Lifetime of the device before leakage affects it disabled
       lifetime_dtod: 0.0  # Device-to-device variation for lifetime disabled
       reset_std: 0.0

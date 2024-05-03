@@ -544,8 +544,6 @@ class IntegratedResNet(nn.Module):
         self.input_module = create_input_module(in_channels=3, base_channels=128)
         self.input_module = convert_to_analog(self.input_module, rpu_config=rpu_config_float)
         self.features = create_resnet_features(architecture=architecture)
-
-        rpu_config = LinearStepDevice()
         self.features = convert_to_analog(self.features, rpu_config=rpu_config)
         # 인풋 피처의 크기를 정확히 계산하는 것이 중요합니다. 여기서는 예시로 512 * block.expansion을 사용합니다.
         # 실제 사용 시, ResNetFeatures의 마지막 출력 크기를 기반으로 설정해야 합니다.
