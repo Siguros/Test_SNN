@@ -16,8 +16,8 @@ import torch.utils.checkpoint as checkpoint
 from aihwkit.nn import AnalogConv2d, AnalogLinear, AnalogSequential
 from aihwkit.nn.conversion import convert_to_analog
 
-from aihwkit.simulator.configs import FloatingPointRPUConfig, FloatingPointDevice
-
+from aihwkit.simulator.configs import FloatingPointRPUConfig, FloatingPointDevice, LinearStepDevice
+from aihwkit.simulator.configs import MappingParameter
 # 필요한 경우 추가 경로를 포함
 sys.path.append('/path/to/src/aihwkit') 
 
@@ -539,10 +539,13 @@ class IntegratedResNet(nn.Module):
         super(IntegratedResNet, self).__init__()
         # ResNetFeatures와 ResNetClassifier를 생성합니다.
         # create_resnet_features 함수와 create_resnet_classifier 함수를 사용하여 각각의 컴포넌트를 초기화합니다.'
+        # mapping = MappingParameter(weight_scaling_omega=1.0)
         rpu_config_float = FloatingPointRPUConfig()
-        self.input_module = create_input_module()
+        self.input_module = create_input_module(in_channels=3, base_channels=128)
         self.input_module = convert_to_analog(self.input_module, rpu_config=rpu_config_float)
         self.features = create_resnet_features(architecture=architecture)
+
+        rpu_config = LinearStepDevice()
         self.features = convert_to_analog(self.features, rpu_config=rpu_config)
         # 인풋 피처의 크기를 정확히 계산하는 것이 중요합니다. 여기서는 예시로 512 * block.expansion을 사용합니다.
         # 실제 사용 시, ResNetFeatures의 마지막 출력 크기를 기반으로 설정해야 합니다.

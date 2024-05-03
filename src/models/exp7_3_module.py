@@ -26,14 +26,15 @@ from aihwkit.simulator.configs import (
 from aihwkit.simulator.configs import SoftBoundsPmaxDevice
 from aihwkit.simulator.configs import SingleRPUConfig, ConstantStepDevice, IdealDevice
 from aihwkit.simulator.configs  import SoftBoundsDevice, SoftBoundsPmaxDevice
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 class SalmonLitModule(LightningModule):
     def __init__(
         self,
         model: str,
-        integrated_resnet: IntegratedResNet,  # integrated_resnet_config 대신 integrated_resnet 사 # Changed from rpu_config to integrated_resnet_config
-        optimizer: dict,
+        integrated_resnet: IntegratedResNet,
         compile: bool,
+        optimizer: dict,
         dataset: str,
         epoch: int,
         loss_coefficient: float,
@@ -47,17 +48,16 @@ class SalmonLitModule(LightningModule):
         block: str,
         alpha: float,
         p_max: int,
-        opt_config : str,
-        sch_config : str,
-        sd_config : str,
-        FC_Digit : str
+        opt_config: str,
+        sd_config: str,
+        FC_Digit: str,
+        sch_config: str,
+        scheduler: dict
     ):
         super().__init__()
         self.save_hyperparameters()
 
-        # Initialize IntegratedResNet with parameters from integrated_resnet_config
-        
-        # 모듈 구성요소 설정
+        # Initialize components from integrated_resnet
         self.input = integrated_resnet.input_module
         self.features = integrated_resnet.features
         self.classifier = integrated_resnet.classifier
@@ -65,7 +65,7 @@ class SalmonLitModule(LightningModule):
         self.attention2 = integrated_resnet.attention2
         self.attention3 = integrated_resnet.attention3
 
-        # 기타 매개변수들을 클래스 속성으로 저장
+        # Initialize other properties and metrics
         self.compile = compile
         self.model = model
         self.dataset = dataset
@@ -81,8 +81,11 @@ class SalmonLitModule(LightningModule):
         self.block = block
         self.alpha = alpha
         self.p_max = p_max
+        self.opt_config = opt_config
+        self.sd_config = sd_config
+        self.FC_Digit = FC_Digit
 
-        # loss function and metrics 초기화
+        # Initialize loss functions and metrics
         self.criterion = torch.nn.CrossEntropyLoss()
         self.train_acc = Accuracy(task="multiclass", num_classes=10)
         self.val_acc = Accuracy(task="multiclass", num_classes=10)
@@ -93,6 +96,9 @@ class SalmonLitModule(LightningModule):
         self.val_acc_0_best = MaxMetric()
         self.adaptation_layers = torch.nn.ModuleList()
         self.init_adaptation_layers = False
+
+# 이 구성을 통해 생성자에 `scheduler`를 전달하는 문제를 해결하고, 설정은 `configure_optimizers`에서 관리됩니다.
+
     
     # def on_train_epoch_end(self, unused=None, outputs=None):
     #     # 모든 레이어 목록 정의
@@ -265,15 +271,31 @@ class SalmonLitModule(LightningModule):
             # 예: self.backbone = self.load_pretrained_backbone()
             
     def configure_optimizers(self):
-        # AnalogSGD로 최적화기 설정 변경
-        optimizer = AnalogSGD(self.parameters(), lr=self.hparams.optimizer['lr'],
-                            weight_decay=self.hparams.optimizer['weight_decay'],
-                            momentum=self.hparams.optimizer.get('momentum', 0.9),  # momentum 추가, 기본값은 0으로 설정
-                            dampening=self.hparams.optimizer.get('dampening', 0),  # dampening 추가, 기본값은 0으로 설정
-                            nesterov=self.hparams.optimizer.get('nesterov', False))  # nesterov 추가, 기본값은 False로 설정
-        optimizer.regroup_param_groups(self.parameters())
+        # Optimizer 설정
+        optimizer = AnalogSGD(
+            self.parameters(),
+            lr=self.hparams.optimizer.lr,
+            weight_decay=self.hparams.optimizer.weight_decay,
+            momentum=self.hparams.optimizer.momentum,
+            dampening=self.hparams.optimizer.dampening,
+            nesterov=self.hparams.optimizer.nesterov
+        )
         
-        return optimizer
+        # Cosine Annealing Scheduler 설정
+        scheduler = CosineAnnealingLR(
+            optimizer,
+            T_max=self.hparams.scheduler.T_max,
+            eta_min=self.hparams.scheduler.eta_min
+        )
+
+        scheduler_config = {
+            'scheduler': scheduler,
+            'interval': 'epoch',
+            'frequency': 1
+        }
+
+        return [optimizer], [scheduler_config]
+
 
 
 
