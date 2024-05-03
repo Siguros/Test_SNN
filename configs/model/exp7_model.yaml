@@ -45,7 +45,7 @@ integrated_resnet:
     
 # Optimizer settings
 optimizer:
-  lr: 0.01
+  lr: 0.1
   weight_decay: 0.0
   # SGD를 사용하므로, Adam에 특화된 betas, eps, amsgrad 매개변수는 제거
   momentum: 0.9  # SGD에 자주 사용되는 momentum 매개변수 추가

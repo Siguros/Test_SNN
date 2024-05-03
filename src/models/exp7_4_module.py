@@ -137,11 +137,11 @@ class SalmonLitModule(LightningModule):
             # AnalogSGD로 최적화기 설정 변경
         optimizer = AnalogSGD(self.parameters(), lr=self.hparams.optimizer['lr'],
                                 weight_decay=self.hparams.optimizer['weight_decay'],
-                                momentum=self.hparams.optimizer.get('momentum', 0),  # momentum 추가, 기본값은 0으로 설정
+                                momentum=self.hparams.optimizer.get('momentum', 0.9),  # momentum 추가, 기본값은 0으로 설정
                                 dampening=self.hparams.optimizer.get('dampening', 0),  # dampening 추가, 기본값은 0으로 설정
                                 nesterov=self.hparams.optimizer.get('nesterov', False))  # nesterov 추가, 기본값은 False로 설정
         optimizer.regroup_param_groups(self.parameters())
-        
+
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                                     step_size=self.hparams.scheduler['step_size'],
                                                     gamma=self.hparams.scheduler['gamma'])
