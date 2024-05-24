@@ -1,0 +1,13 @@
+_target_: src.models.exp10_module_SNN.SalmonLitModule
+
+net:
+  _target_: src.models.components.exp10_model_SNN.Spiking_ResNet18_LIF_STBP
+
+optimizer:
+  lr: 0.1
+  weight_decay: 0.0
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 300

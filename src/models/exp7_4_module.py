@@ -142,10 +142,16 @@ class SalmonLitModule(LightningModule):
                                 nesterov=self.hparams.optimizer.get('nesterov', False))  # nesterov 추가, 기본값은 False로 설정
         optimizer.regroup_param_groups(self.parameters())
 
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                    step_size=self.hparams.scheduler['step_size'],
-                                                    gamma=self.hparams.scheduler['gamma'])
+#         scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+#                                                     step_size=self.hparams.scheduler['step_size'],
+#                                                     gamma=self.hparams.scheduler['gamma'])
+#         scheduler_config = {'scheduler': scheduler, 'interval': 'epoch', 'frequency': 1}
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                               T_max=self.hparams.scheduler.get('T_max', 300),
+                                                               eta_min=self.hparams.scheduler.get('eta_min', 0.0001))
+
         scheduler_config = {'scheduler': scheduler, 'interval': 'epoch', 'frequency': 1}
+
         return [optimizer], [scheduler_config]
 
 
